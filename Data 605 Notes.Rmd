@@ -1,0 +1,184 @@
+---
+title: "Untitled"
+author: "Mohamed Hassan-El Serafi"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+matrix<-matrix(c(sum(X>x_med & Y<y_med),sum(X>x_med & Y>y_med), sum(X<x_med & Y<y_med),sum(X<x_med & Y>y_med)), nrow = 2,ncol = 2)
+matrix <- cbind(matrix,c(matrix[1,1]+matrix[1,2],matrix[2,1]+matrix[2,2]))
+matrix <- rbind(matrix,c(matrix[1,1]+matrix[2,1],matrix[1,2]+matrix[2,2],matrix[1,3]+matrix[2,3]))
+contingency <- as.data.frame(matrix)
+names(contingency) <- c("X>x","X<x", "Total")
+row.names(contingency) <- c("Y<y","Y>y", "Total")
+reactable(contingency)
+```
+
+
+```{r}
+# Create a data frame with X and Y
+data <- data.frame(X, Y)
+
+# Create binary indicators for X>x and Y>y
+data$X_gt_x <- as.integer(data$X > 10)  # Assuming x=10
+data$Y_gt_y <- as.integer(data$Y > 10)  # Assuming y=10
+
+# Build the contingency table
+contingency_table <- table(data$X_gt_x, data$Y_gt_y)
+
+# Print the contingency table
+print(contingency_table)
+
+# Calculate the probabilities
+joint_prob <- sum(data$X_gt_x & data$Y_gt_y) / nrow(data)
+marginal_prob_X_gt_x <- sum(data$X_gt_x) / nrow(data)
+marginal_prob_Y_gt_y <- sum(data$Y_gt_y) / nrow(data)
+
+# Calculate the product of marginal probabilities
+product_of_marginals <- marginal_prob_X_gt_x * marginal_prob_Y_gt_y
+
+# Print the probabilities
+cat("Joint Probability (P(X>x & Y>y)): ", joint_prob, "\n")
+cat("Product of Marginal Probabilities (P(X>x) * P(Y>y)): ", product_of_marginals, "\n")
+
+```
+
+```{r}
+library(reactable)
+# Create a data frame with X and Y
+df <- data.frame(X = X, Y = Y)
+
+# Define the thresholds for x and y
+x_threshold <- x_med
+y_threshold <- y_med
+
+# Calculate probabilities
+prob_joint <- sum(df$X > x_med & df$Y > y_med) / nrow(df)
+prob_marginal_x <- sum(df$X > x_med) / nrow(df)
+prob_marginal_y <- sum(df$Y > y_med) / nrow(df)
+prob_product <- prob_marginal_x * prob_marginal_y
+
+# Build a table
+table_data <- matrix(c(
+  sum(df$X > x_med & df$Y > y_med)/length(X), sum(df$X > x_med)/length(X),
+  sum(df$Y > y_med)/length(X), nrow(df)
+), nrow = 2, byrow = TRUE)
+
+colnames(table_data) <- c("Y > y_med", "Y <= y_med")
+rownames(table_data) <- c("X > x_med", "X <= x_med")
+
+# Display the table
+reactable(table_data)
+
+# Compare the probabilities
+#cat("\nProbabilities:\n")
+#cat("P(X > x \cap Y > y):", prob_joint, "\n")
+#cat("P(X > x)P(Y > y):", prob_product, "\n")
+
+```
+
+
+
+```{r}
+# Display the results
+cat("a. P(X > x | X > y):", prob_a, "\n")
+cat("b. P(X > x & Y > y):", prob_b, "\n")
+cat("c. P(X < x | X > y):", prob_c, "\n\n")
+
+cat("Contingency Table:\n", prob_table, "\n\n")
+cat("Marginal Probability P(X > x):", prob_X_gt_x, "\n")
+cat("Marginal Probability P(Y > y):", prob_Y_gt_y, "\n")
+cat("Joint Probability P(X > x & Y > y):", prob_joint, "\n")
+cat("Absolute difference between P(X > x & Y > y) and P(X > x) * P(Y > y):", equality_check, "\n")
+```
+
+
+
+
+```{r}
+prob_table <- table(X > x_med, Y > y_med)
+prob_table
+```
+
+
+
+
+```{r}
+# Marginal Probabilities
+prob_X_gt_x <- sum(X > x_med) / length(X)
+prob_Y_gt_y <- sum(Y > y_med) / length(Y)
+prob_X_gt_x
+prob_Y_gt_y
+```
+
+
+```{r}
+# Joint Probabilities
+prob_joint <- sum(X > x_med & Y > y_med) / length(X)
+prob_joint
+```
+
+
+```{r}
+equality_check <- abs(prob_joint - (prob_X_gt_x * prob_Y_gt_y))
+equality_check
+```
+
+```{r}
+age_length <- plot_ly(data=crab_age_df_train, x = ~Length, y = ~Age, type = 'scatter', mode = 'markers', split = ~Sex, 
+                marker = list(line = list(width = 1)))
+age_length
+```
+
+
+
+```{r}
+age_diameter <- plot_ly(data=crab_age_df_train, x = ~Diameter, y = ~Age, type = 'scatter', mode = 'markers', split = ~Sex, 
+                marker = list(line = list(width = 1)))
+age_diameter
+```
+
+```{r}
+age_height <- plot_ly(data=crab_age_df_train, x = ~Height, y = ~Age, type = 'scatter', mode = 'markers', split = ~Sex,
+                marker = list(line = list(width = 1)))
+age_height
+```
+
+
+```{r}
+age_weight <- plot_ly(data=crab_age_df_train, x = ~Weight, y = ~Age, type = 'scatter', mode = 'markers', split = ~Sex,
+                marker = list(line = list(width = 1)))
+age_weight
+```
+
+
+```{r}
+age_shu_weight <- plot_ly(data=crab_age_df_train, x = ~`Shucked Weight`, y = ~Age, type = 'scatter', mode = 'markers', split = ~Sex,
+                marker = list(line = list(width = 1)))
+age_shu_weight
+```
+
+
+```{r}
+age_vis_weight <- plot_ly(data=crab_age_df_train, x = ~`Viscera Weight`, y = ~Age, type = 'scatter', mode = 'markers',
+                          split = ~Sex, marker = list(line = list(width = 1)))
+age_vis_weight
+```
+
+
+
+
+```{r}
+age_shell_weight <- plot_ly(data=crab_age_df_train, x = ~`Shell Weight`, y = ~Age, type = 'scatter', mode = 'markers', split = ~Sex,
+                marker = list(line = list(width = 1)))
+age_shell_weight
+```
+
+
+

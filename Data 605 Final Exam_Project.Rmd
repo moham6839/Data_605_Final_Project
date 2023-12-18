@@ -1,0 +1,1112 @@
+---
+title: "Data 605 Final Exam"
+author: "Mohamed Hassan-El Serafi"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+
+```{r}
+library(reactable)
+library(vtable)
+library(caret)
+library(GGally)
+library(tidyverse)
+library(plotly)
+library(LaplacesDemon)
+library(ggeasy)
+library(corrplot)
+library(matrixcalc)
+library(Matrix)
+library(MASS)
+library(moments)
+library(car)
+```
+
+
+
+
+
+## Problem 1.
+
+**Using R, set a random seed equal to 1234 (i.e., set.seed(1234)).  Generate a random variable X that has 10,000 continuous random uniform values between 5 and 15.Then generate a random variable Y that has 10,000 random normal values with a mean of 10 and a standard deviation of 2.89.**
+
+```{r}
+# Random seed
+set.seed(1234)
+
+# Random variable X with 10,000 continuous random uniform values between 5 and 15
+X <- runif(10000, min = 5, max = 15)
+
+# Random variable Y with 10,000 random normal values
+# Mean = 10, Standard Deviation = 2.89
+Y <- rnorm(10000, mean = 10, sd = 2.89)
+```
+
+
+```{r}
+summary(X)
+```
+
+```{r}
+summary(Y)
+```
+
+
+
+
+**Probability.   Calculate as a minimum the below probabilities a through c.  Assume the small letter "x" is estimated as the median of the X variable, and the small letter "y" is estimated as the median of the Y variable.  Interpret the meaning of all probabilities.**
+
+
+a.   $P(X>x | X>y)$	
+
+Formula for Conditional Probability
+
+$$
+\frac{P(X>x \cap X>y)}{P(X>y)}
+$$
+
+
+
+```{r}
+# Estimate the medians
+x_med <- median(X)
+y_med <- median(Y)
+```
+
+
+
+
+
+
+
+
+
+```{r}
+prob_a <- sum(X>x_med & X>y_med)/sum(X>y_med)
+prob_a
+```
+
+
+
+b.  $P(X>x \& Y>y)$
+
+```{r}
+prob_b <- sum(X>x_med & Y>y_med)/length(X)
+prob_b
+```
+
+
+
+
+c.  $P(X<x|X>y)$	
+
+
+$$
+\frac{P(X<x \cap X>y)}{P(X>y)}
+$$
+
+
+```{r}
+prob_c <- sum(X<x_med & X>y_med)/sum(X>y_med)
+prob_c
+```
+
+
+
+**Investigate whether** $P(X>x & Y>y)$ = $P(X>x)P(Y>y)$ **by building a table and evaluating the marginal and joint probabilities.**
+
+
+
+
+
+
+
+
+
+
+```{r}
+# Creating table
+comparison_table <- table(X>x_med, Y>y_med)
+
+# Calculate marginal probabilities
+marg_prob_X_gt_x <- sum(X>x_med)/length(X)
+marg_prob_Y_gt_y <- sum(Y>y_med)/length(Y)
+
+# Calculate joint probability P(X>x & Y>y)
+joint_prob <- sum(X>x_med & Y>y_med) / length(X)
+
+# Check if P(X>x & Y>y) = P(X>x)*P(Y>y)
+equality_check <- abs(joint_prob - (marg_prob_X_gt_x * marg_prob_Y_gt_y))
+
+cat("Comparison Table:", comparison_table, "\n")
+cat("Marginal Probability P(X>x_med):", marg_prob_X_gt_x,"\n")
+cat("Marginal Probability P(Y>y_med):", marg_prob_Y_gt_y,"\n")
+cat("Joint Probability P(X>x & Y>y):", joint_prob, "\n")
+cat("Absolute difference between P(X>x & Y>y) and P(X>x) * P(Y>y):", equality_check, "\n")
+```
+
+
+
+
+```{r}
+# Matrix with values from above
+comparison_matrix <- matrix(c(2507, 2493, 2493, 2507), nrow = 2, byrow = TRUE)
+
+# Convert the matrix to a data frame for better display
+comparison_df <- as.data.frame(comparison_matrix)
+names(comparison_df) <- c("X>x_med","X<x_med")
+row.names(comparison_df) <- c("Y<y_med","Y>y_med")
+reactable(comparison_df)
+```
+
+
+
+
+
+
+
+**Check to see if independence holds by using Fisher’s Exact Test and the Chi Square Test.  What is the difference between the two? Which is most appropriate?  Are you surprised at the results?  Why or why not?**
+
+### Fisher's Exact Test
+
+```{r}
+fisher_test_result <- fisher.test(comparison_table)
+fisher_test_result
+```
+
+
+
+
+### Chi Square Test
+
+```{r}
+chi_square_test_result <- chisq.test(comparison_table)
+chi_square_test_result
+```
+
+
+Using this [website](https://statisticsbyjim.com/hypothesis-testing/fishers-exact-test/) as a reference, Fisher's Exact Test and Chi-square test have similarities and differences. They both assess the relationship between categorical variables, and determine the independence between each variable. Fisher's Exact Test calculates the number of all possible contingency tables with the same row and column totals as the observed table, with marginal distributions being one example. It calculates the probability for the p-value by finding the proportion of possible tables that are more extreme than the observed table. This test is appropriate for all sample sizes. However, this test is mainly used for small sample sizes. 
+Some guidelines associated with using this test include having cell counts smaller than 20, having a cell with an expected value 5 or less, and when column or row marginal values are extremely uneven. In the case of the Chi-Square test, it is used for large sample sizes. It uses a test statistic and sampling distribution to calculate p-values. The chi-square sampling distribution only approximates the correct distribution, providing better p-values as the cell values in the table increase. As a result, chi-square p-values are invalid when you have small cell counts.
+
+
+
+In this case, both tests have the same p-values: 0.7949. I am somewhat surprised each test delivered the same result, considering the sample size is the same for each. Based on the definition for each test, I would have thought that the Chi-square test would produced a lower p-value, since the sample size of 10000 is large, and the values are between 5 and 15, two conditions that are counter to the guidelines presented earlier about using Fisher's Exact Test.
+
+
+
+
+
+
+
+
+## Problem 2
+
+**You are to register for Kaggle.com (free) and compete in the Regression with a Crab Age Dataset competition.  https://www.kaggle.com/competitions/playground-series-s3e16  I want you to do the following.
+
+**5 points.  Descriptive and Inferential Statistics. Provide univariate descriptive statistics and appropriate plots for the training data set.  Provide a scatterplot matrix for at least two of the independent variables and the dependent variable. Derive a correlation matrix for any three quantitative variables in the dataset.  Test the hypotheses that the correlations between each pairwise set of variables is 0 and provide an 80% confidence interval.  Discuss the meaning of your analysis.  Would you be worried about familywise error? Why or why not?**
+
+
+
+
+
+```{r}
+crab_age_df_train <- read.csv("https://raw.githubusercontent.com/moham6839/Data_605_Final_Project/main/train.csv", check.names = FALSE)
+reactable(crab_age_df_train)
+```
+
+
+
+
+As stated in the description of the Crab Age dataset on the Kaggle website, "For a commercial crab farmer knowing the right age of the crab helps them decide if and when to harvest the crabs. Beyond a certain age, there is negligible growth in crab's physical characteristics and hence, it is important to time the harvesting to reduce cost and increase profit." Therefore, I will use Age as the dependent variable, and 
+
+
+
+
+
+
+### Univariate Descriptive Statistics and Plots
+
+
+```{r}
+st(crab_age_df_train)
+```
+
+
+## Length
+
+```{r}
+summary(crab_age_df_train$Length)
+```
+
+
+
+
+
+
+
+
+
+```{r}
+ggplot(crab_age_df_train, aes(Length)) + 
+  geom_boxplot() +
+  theme_minimal() +
+  ggtitle("Length") +
+  ggeasy::easy_center_title() 
+```
+
+```{r}
+hist(crab_age_df_train$Length, xlab = "Length", main = "Length of Crabs", col = "blue")
+```
+
+
+
+
+
+## Diameter
+
+```{r}
+summary(crab_age_df_train$Diameter)
+```
+
+
+
+
+
+
+```{r}
+ggplot(crab_age_df_train, aes(Diameter)) + 
+  geom_boxplot() +
+  theme_minimal() +
+  ggtitle("Diameter") +
+  ggeasy::easy_center_title() 
+```
+
+```{r}
+hist(crab_age_df_train$Diameter, xlab = "Diameter", main = "Diameter of Crabs", col = "blue")
+```
+
+
+
+
+
+
+## Height
+
+```{r}
+summary(crab_age_df_train$Height)
+```
+
+
+
+
+
+
+
+
+
+
+```{r}
+ggplot(crab_age_df_train, aes(Height)) + 
+  geom_boxplot() +
+  theme_minimal() +
+  ggtitle("Height") +
+  ggeasy::easy_center_title() 
+```
+
+
+```{r}
+hist(crab_age_df_train$Height, xlab = "Height", main = "Height of Crabs", col = "blue")
+```
+
+
+
+
+
+
+
+
+
+
+## Weight
+
+
+```{r}
+summary(crab_age_df_train$Weight)
+```
+
+
+
+
+
+```{r}
+ggplot(crab_age_df_train, aes(Weight)) + 
+  geom_boxplot() +
+  theme_minimal() +
+  ggtitle("Weight") +
+  ggeasy::easy_center_title() 
+```
+
+
+```{r}
+hist(crab_age_df_train$Weight, xlab = "Weight", main = "Weight of Crabs", col = "blue")
+```
+
+
+
+
+
+
+
+
+
+## Shucked Weight
+
+```{r}
+summary(crab_age_df_train$`Shucked Weight`)
+```
+
+
+
+
+
+
+```{r}
+ggplot(crab_age_df_train, aes(`Shucked Weight`)) + 
+  geom_boxplot() +
+  theme_minimal() +
+  ggtitle("Shucked Weight") +
+  ggeasy::easy_center_title() 
+```
+
+
+```{r}
+hist(crab_age_df_train$`Shucked Weight`, xlab = "Shucked Weight", main = "Shucked Weight of Crabs", col = "blue")
+```
+
+
+
+
+
+
+## Viscera Weight
+
+```{r}
+summary(crab_age_df_train$`Viscera Weight`)
+```
+
+
+
+
+
+```{r}
+ggplot(crab_age_df_train, aes(`Viscera Weight`)) + 
+  geom_boxplot() +
+  theme_minimal() +
+  ggtitle("Viscera Weight") +
+  ggeasy::easy_center_title() 
+```
+
+```{r}
+hist(crab_age_df_train$`Viscera Weight`, xlab = "Viscera Weight", main = "Viscera Weight of Crabs", col = "blue")
+```
+
+
+
+
+
+
+
+
+## Shell Weight
+
+```{r}
+summary(crab_age_df_train$`Shell Weight`)
+```
+
+
+
+
+
+
+```{r}
+ggplot(crab_age_df_train, aes(`Shell Weight`)) + 
+  geom_boxplot() +
+  theme_minimal() +
+  ggtitle("Shell Weight") +
+  ggeasy::easy_center_title() 
+```
+
+
+```{r}
+hist(crab_age_df_train$`Shell Weight`, xlab = "Shell Weight", main = "Shell Weight of Crabs", col = "blue")
+```
+
+
+
+
+
+
+
+## Sex
+
+```{r}
+summary(crab_age_df_train$Sex)
+```
+
+
+```{r}
+ggplot(crab_age_df_train, aes(Sex)) + 
+  geom_bar() +
+  theme_minimal() +
+  ggtitle("Gender of Crabs") +
+  ggeasy::easy_center_title() 
+```
+
+
+
+
+## Age
+
+
+```{r}
+summary(crab_age_df_train$Age)
+```
+
+```{r}
+ggplot(crab_age_df_train, aes(Age)) + 
+  geom_boxplot() +
+  theme_minimal() +
+  ggtitle("Age") +
+  ggeasy::easy_center_title() 
+```
+
+
+```{r}
+hist(crab_age_df_train$Age, xlab = "Age", main = "Age of Crabs", col = "blue")
+```
+
+
+
+
+
+
+
+
+
+
+
+### Scatterplot Matrix 
+
+Using Age as a dependent variable, I will use Height and Weight as my independent variables:
+
+
+```{r}
+train_set2 <- crab_age_df_train %>%
+  dplyr::select(Age, Height, Weight)
+```
+
+
+
+```{r}
+pairs(train_set2, main = "Scatter Plot Matrix for Age, Height, and Weight")
+```
+
+
+
+```{r}
+ggpairs(train_set2, title="Scatterplot Matrix Using Age, Height, and Weight")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+### Correlation Matrix
+
+
+
+
+
+```{r}
+train_set_df_corr <- crab_age_df_train %>%
+  dplyr::select(`Shucked Weight`, `Viscera Weight`, `Shell Weight`)
+```
+
+
+
+
+```{r}
+corr_mat <- cor(train_set_df_corr)
+corr_mat
+```
+
+
+```{r}
+ggpairs(train_set_df_corr)
+```
+
+```{r}
+ggcorrplot::ggcorrplot(corr_mat, hc.order = TRUE, type = "lower",
+          lab = TRUE)
+```
+
+
+
+### Test Hypotheses with 80% Confidence Interval
+
+
+#### Shucked Weight and Viscera Weight
+
+
+```{r}
+shuck_and_vis <- cor.test(train_set_df_corr$`Shucked Weight`, train_set_df_corr$`Viscera Weight`, conf.level = 0.8)
+shuck_and_vis
+```
+
+
+#### Shucked Weight and Shell Weight
+
+
+```{r}
+shuck_and_shell <- cor.test(train_set_df_corr$`Shucked Weight`, train_set_df_corr$`Shell Weight`, conf.level = 0.8)
+shuck_and_shell
+```
+
+
+
+#### Viscera Weight and Shell Weight
+
+
+```{r}
+vis_and_shell <- cor.test(train_set_df_corr$`Viscera Weight`, train_set_df_corr$`Shell Weight`, conf.level = 0.8)
+vis_and_shell
+```
+
+When analyzing the correlations of the three variables, each pair is statistically significant, having a p-value significantly less than .05. It appears we can reject the null hypothesis. However, there is a high amount of multicollinearity between each pair, which makes it difficult to reject the null hypothesis and infer conclusions from hypothesis testing.
+
+Familywise error rate (FWER) is defined as the probability of making any Type I errors, which are false positives (https://statweb.stanford.edu/~joftius/slides/testing.pdf). The formula for calculating FWER is $1-(1-\alpha)^m$ (https://www.statistics.com/glossary/family-wise-type-i-error/#:~:text=aFW%20%3D%201%20%E2%80%93%20(1%20%E2%80%93%20a)C.&text=For%20example%2C%20for%20k%3D4,comparison%2Dwise%20type%20I%20errors). We can see what our error is:
+
+
+```{r}
+alpha <- 0.2 # 1 - 0.8 (confidence interval)
+m <- 3
+FWER <- (1 - ((1 - alpha)^m))*100 
+FWER
+```
+
+The FWER is 48.8%, which is pretty high and should be a cause for concern. However, there are methods that can reduce FWER. One is the Bonferroni Correction, which adjusts the significance level to control the probability of Type I errors (https://statisticsbyjim.com/hypothesis-testing/bonferroni-correction/). It is calculated by dividing the p-value by the number of tests. In this case, it would be:
+
+```{r}
+BC <- alpha/m
+BC
+```
+
+
+The adjusted p-value is .06, which means that the tests now have a 6% chance of having a false positive, compared to the original p-value of 0.2, or 20%. 
+
+
+**5 points. Linear Algebra and Correlation.  Invert your correlation matrix from above. (This is known as the precision matrix and contains variance inflation factors on the diagonal.) Multiply the correlation matrix by the precision matrix, and then multiply the precision matrix by the correlation matrix. Conduct LDU decomposition on the matrix.** 
+
+
+
+
+
+
+
+
+```{r}
+# Invert Correlation Matrix to Precision Matrix
+precision_matrix <- Cov2Prec(corr_mat)
+reactable(precision_matrix)
+```
+
+
+
+```{r}
+# Multiply Correlation Matrix by the Precision Matrix
+corr_times_prec <- corr_mat %*% precision_matrix
+reactable(corr_times_prec)
+```
+
+```{r}
+# Multiply Precision Matrix by Correlation Matrix
+prec_times_corr <- precision_matrix %*% corr_mat
+reactable(prec_times_corr)
+```
+
+
+
+
+
+
+
+
+```{r}
+LDU <- lu.decomposition(prec_times_corr)
+LDU
+```
+
+
+```{r}
+reactable(LDU$L)
+```
+
+
+
+```{r}
+reactable(LDU$U)
+```
+
+
+
+
+
+
+
+
+
+
+
+**5 points.  Calculus-Based Probability & Statistics.  Many times, it makes sense to fit a closed form distribution to data.  Select a variable in the Kaggle.com training dataset that is skewed to the right, shift it so that the minimum value is absolutely above zero if necessary.  Then load the MASS package and run fitdistr to fit an exponential probability density function.  (See  https://stat.ethz.ch/R-manual/R-devel/library/MASS/html/fitdistr.html ).  Find the optimal value of*** $\lambda$ **for this distribution, and then take 1000 samples from this exponential distribution using this value (e.g., rexp(1000, $\lambda$)).  Plot a histogram and compare it with a histogram of your original variable.   Using the exponential pdf, find the 5th and 95th percentiles using the cumulative distribution function (CDF).   Also generate a 95% confidence interval from the empirical data, assuming normality.  Finally, provide the empirical 5th percentile and 95th percentile of the data.  Discuss.**
+
+
+When examining the histograms of each quantitative variable, Length and Diameter were the only variables that appeared to have a skewness to the left. I decided to look at the skewness of each variable:
+
+
+```{r}
+skewness(crab_age_df_train$Length)
+```
+
+
+```{r}
+skewness(crab_age_df_train$Diameter)
+```
+
+
+
+```{r}
+skewness(crab_age_df_train$Height)
+```
+
+
+```{r}
+skewness(crab_age_df_train$Weight)
+```
+
+
+
+```{r}
+skewness(crab_age_df_train$`Shucked Weight`)
+```
+
+```{r}
+skewness(crab_age_df_train$`Viscera Weight`)
+```
+
+
+```{r}
+skewness(crab_age_df_train$`Shell Weight`)
+```
+
+```{r}
+skewness(crab_age_df_train$Age)
+```
+
+
+
+My assumptions were accurate. Length and Diameter have a negative number below zero, indicating a skewness to the left. The rest of the variables were positive numbers greater than zero, and indicates a skewness to the right. I decided to look at `Shucked Weight`, since it has the highest skewness amount among the independent variables and appears to have a distinct skewness to the right. 
+
+
+
+
+
+```{r}
+shuck_weight_epdf <- fitdistr(crab_age_df_train$`Shucked Weight`, densfun = 'exponential')
+shuck_weight_epdf
+```
+
+
+```{r}
+lambda <- shuck_weight_epdf$estimate
+shuck_weight_lambda_epdf <- rexp(1000, lambda)
+shuck_weight_lambda_df <- as.data.frame(shuck_weight_lambda_epdf)
+reactable(shuck_weight_lambda_df)
+```
+
+
+```{r}
+par(mfrow = c(1, 2))
+hist(crab_age_df_train$`Shucked Weight`, xlab = "Shucked Weight", main = "Original Shucked Weight of Crabs", col = "blue")
+hist(shuck_weight_lambda_df$shuck_weight_lambda_epdf, xlab = "Transformed Shucked Weight", main = "Shucked Weight of Crabs Transformed", col = "red")
+```
+
+
+
+
+
+
+
+```{r}
+# Using the exponential pdf, find the 5th and 95th percentiles using the cumulative distribution function (CDF).
+percentiles <- quantile(shuck_weight_lambda_df$shuck_weight_lambda_epdf, c(0.05, .95))
+percentiles
+```
+
+
+```{r}
+# Also generate a 95% confidence interval from the empirical data, assuming normality.
+confidence_interval <- t.test(crab_age_df_train$`Shucked Weight`)$conf.int
+names(confidence_interval) <- c("LowerCI", "UpperCI")
+confidence_interval
+```
+
+
+
+```{r}
+#Finally, provide the empirical 5th percentile and 95th percentile of the data.
+empirical_percentiles <- quantile(crab_age_df_train$`Shucked Weight`, c(0.05, .95))
+empirical_percentiles
+```
+
+
+
+
+
+**10 points.  Modeling.  Build some type of multiple regression model and submit your model to the competition board.  Provide your complete model summary and results with analysis.  Report your Kaggle.com user name and score.**
+
+
+
+#### Initial Model
+
+
+To begin, I will run an initial model using `Age` as the dependent variable and including the rest of the variables as independent, with the exception of `id`.
+
+
+```{r}
+sum(is.na(crab_age_df_train))
+```
+
+
+
+```{r}
+# Removing Sex and Length variables
+train_set_model <- crab_age_df_train %>%
+  dplyr::select(-id)
+```
+
+
+
+
+
+```{r}
+ggpairs(train_set_model)
+```
+
+
+
+```{r}
+train_set_model2 <- train_set_model %>%
+  dplyr::select(-Sex)
+```
+
+
+```{r}
+cor_matrix_train <- cor(train_set_model2)
+```
+
+
+
+```{r}
+ggcorrplot::ggcorrplot(cor_matrix_train, hc.order = TRUE, type = "lower",
+          lab = TRUE)
+```
+
+
+
+
+
+There appears to be high multicollinearity between each of the independent variables. The lowest correlation coefficient among the independent variables is 0.864, which is the correlation between `Height` and `Shucked Weight`. Considering it is the lowest correlation coefficient, this indicates that the other independent variables have a high amount of multicollinearity with one another, which can make it difficult to determine each variable's effect on the dependent variable. Nevertheless, I'll create an initial model with all the independent variables and evaluate the model's performance. 
+
+
+
+
+
+```{r}
+initial_ml <- lm(Age ~ ., data=train_set_model)
+summary(initial_ml)
+```
+
+```{r}
+# Checking for multicollinearity using the Variance Inflation Factor
+vif_values <- car::vif(initial_ml)
+print(vif_values)
+```
+
+
+
+
+
+
+```{r}
+plot(initial_ml)
+```
+
+
+```{r}
+ggplot(initial_ml, aes(x = .fitted, y = .resid)) +
+  geom_point() +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  labs(title="Residual vs. Fitted Values Plot") +
+  xlab("Fitted values") +
+  ylab("Residuals")
+```
+
+
+
+```{r}
+ggplot(data = initial_ml, aes(x = initial_ml$residuals)) +
+    geom_histogram(bins = 10, fill = 'steelblue', color = 'black') +
+    labs(title = 'Histogram of Residuals', x = 'Residuals', y = 'Frequency')
+```
+
+
+
+```{r}
+ggplot(data = initial_ml, aes(x = .resid)) +
+  geom_histogram(binwidth = 0.4) +
+  xlab("Residuals")
+```
+
+
+
+
+
+
+
+```{r}
+qqnorm(resid(initial_ml))
+qqline(resid(initial_ml))
+```
+
+When analyzing the results of the initial model, there are some observations that stand out. The overall p-value of the model is significantly below .05, which indicates that the variables together are statistically significant to determine the dependent variable `Age`. The Adjusted R-Squared value is a good initial measure at 55.08%, which means that 55.08% of the variation of `Age` can be explained by the variables in the model. The F-Statistic is the t-value squared. The value of the F-Statistic is 1.009e+04, which taken with the small p-value of 2.2^e-16 would indicate that the null hypothesis can be rejected and the model is statistically significant. The p-values of each variable are below .05, indicating that they are each statistically significant. The t-values of variables should be between 5 and 10, which indicates that the standard error is smaller than their respective coefficients and the variables are statistically significant. In this model, the only variable that has a t-value between 5 and 10 are `Diameter`. 
+
+The plots of the model shows that the model does not provide a good fit for the training data. The Residual vs. Fitted Values plot shows the residual points mostly concentrated around the zero threshold between 5 and 20, which may indicate that the model is overfitting. The histogram of the model shows a center near zero but a slight skewness to the right. The QQ plot shows the the right and left tail deviating from the reference line, which indicates that the model does not do a good job of capturing the linearity between the independent variables and `Age`. 
+
+
+#### Revised Model
+
+Since the variables have high multicollinearity and are relatively skewed, I decided to log transform the dependent and independent variables. For purposes of this specific model, I will not include the `Sex` column.
+
+
+```{r}
+# train_set_model2 has dataframe without Sex column
+revised_train_model <- log(train_set_model2)
+```
+
+
+```{r}
+names(revised_train_model) <- paste0(names(train_set_model2), "_log")
+```
+
+
+```{r}
+reactable(revised_train_model)
+```
+
+In the `Height_log` column, there was an infinite value, so I removed the value:
+
+```{r}
+revised_train_model <- revised_train_model %>%
+  filter_at(vars(Height_log), all_vars(!is.infinite(.)))
+```
+
+
+
+
+```{r}
+cor_log_mat <- cor(revised_train_model)
+```
+
+```{r}
+ggcorrplot::ggcorrplot(cor_log_mat, hc.order = TRUE, type = "lower",
+          lab = TRUE)
+```
+
+
+
+
+```{r}
+revised_ml <- lm(Age_log ~ Length_log + Diameter_log + Height_log + Weight_log + `Shucked Weight_log` +
+                 `Viscera Weight_log` + `Shell Weight_log`, data=revised_train_model)
+summary(revised_ml)
+```
+
+
+
+
+
+
+```{r}
+plot(revised_ml)
+```
+
+
+```{r}
+ggplot(revised_ml, aes(x = .fitted, y = .resid)) +
+  geom_point() +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  labs(title="Residual vs. Fitted Values Plot") +
+  xlab("Fitted values") +
+  ylab("Residuals")
+```
+
+
+
+```{r}
+ggplot(data = revised_ml, aes(x = .resid)) +
+  geom_histogram(binwidth = 0.4) +
+  xlab("Residuals")
+```
+
+
+
+```{r}
+qqnorm(resid(revised_ml))
+qqline(resid(revised_ml))
+```
+
+
+
+Log-transforming the variables in the dataset helped improve the overall performance of the model. The overall p-value is 2.2e-^16, which is the same as the initial model. The Adjusted R-Squared increased, from 55.08% to 63.85%. The F-Statistic increased to 1.868e+04. The median is -0.02497, which is an improvement from the initial model's median of -0.3320. This is important to note, as having a median close to zero is ideal for a good model. When assessing each variable p-value, `Diameter` was the only variable that had p-value greater than .05. When examining the Residual vs Fitted Values plot, the residual points appear more scattered, although it doesn't seem to be random. The histogram plot shows a normal distribution with its center at zero. The tail ends of the QQ plot still deviates from the reference line. However, the left tail appears closer to the reference line than the initial model QQ plot. 
+
+Because the `Diameter` variable has a p-value greater than .05, I will re-run the model without the variable.
+
+```{r}
+revised_ml2 <- lm(Age_log ~ Length_log + Height_log + Weight_log + `Shucked Weight_log` +
+                 `Viscera Weight_log` + `Shell Weight_log`, data=revised_train_model)
+summary(revised_ml2)
+```
+
+
+
+```{r}
+plot(revised_ml2)
+```
+
+
+
+```{r}
+ggplot(revised_ml2, aes(x = .fitted, y = .resid)) +
+  geom_point() +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  labs(title="Residual vs. Fitted Values Plot") +
+  xlab("Fitted values") +
+  ylab("Residuals")
+```
+
+
+
+```{r}
+ggplot(data = revised_ml2, aes(x = .resid)) +
+  geom_histogram(binwidth = 0.4) +
+  xlab("Residuals")
+```
+
+
+
+```{r}
+qqnorm(resid(revised_ml2))
+qqline(resid(revised_ml2))
+```
+
+
+Removing the `Diameter` variable did not improve the performance of the model. 
+
+
+
+Based on the results of each model, the revised model is the better performing model, and I chose it for the test dataset. 
+
+
+
+
+
+#### Using Final Model on Test Set
+
+
+```{r}
+crab_age_df_test <- read_csv("https://raw.githubusercontent.com/moham6839/Data_605_Final_Project/main/test.csv")
+reactable(crab_age_df_test)
+```
+
+
+```{r}
+crab_age_df_test2 <- crab_age_df_test %>%
+  dplyr::select(-Sex)
+revised_test_model <- log(crab_age_df_test2)
+```
+
+
+
+```{r}
+names(revised_test_model) <- paste0(names(crab_age_df_test2), "_log")
+```
+
+```{r}
+reactable(revised_test_model)
+```
+
+
+
+
+
+
+```{r}
+# replacing Inf values in Height_log column with median of the column
+revised_test_model <- revised_test_model %>%
+  mutate_if(is.numeric, function(x)ifelse(is.infinite(x), median(revised_test_model$Height_log), x))
+  #filter_at(vars(Height_log), all_vars(!is.infinite(.)))
+```
+
+
+
+
+
+
+
+```{r}
+predict_test_df <- predict(revised_ml2, revised_test_model)
+summary(predict_test_df)
+```
+
+
+
+
+```{r}
+test_submission_df <- data.frame(Id = crab_age_df_test$id, Age = predict_test_df)
+
+write.csv(test_submission_df, "test_submission.csv", row.names = FALSE)
+```
+
+
+
+```{r}
+knitr::include_graphics("/Users/mohamedhassan/Documents/Kaggle Screenshot.png")
+```
+
+No score was generated due to the submission being after the deadline.
+
+
+
+
