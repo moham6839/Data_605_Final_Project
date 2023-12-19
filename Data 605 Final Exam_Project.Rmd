@@ -1092,6 +1092,11 @@ summary(predict_test_df)
 
 
 
+```{r}
+options(scipen = 999)
+```
+
+
 
 ```{r}
 test_submission_df <- data.frame(Id = crab_age_df_test$id, Age = predict_test_df)
@@ -1102,10 +1107,18 @@ write.csv(test_submission_df, "test_submission.csv", row.names = FALSE)
 
 
 ```{r}
-knitr::include_graphics("/Users/mohamedhassan/Documents/Kaggle Screenshot.png")
+knitr::include_graphics("/Users/mohamedhassan/Documents/Kaggle Score Screenshot.png")
 ```
 
-No score was generated due to the submission being after the deadline.
+
+
+
+
+
+
+
+
+
 
 
 
